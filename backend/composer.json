@@ -1,0 +1,14 @@
+{
+    "name": "minicrm/backend",
+    "description": "MiniCRM Backend API",
+    "type": "project",
+    "require": {
+        "firebase/php-jwt": "^6.0"
+    },
+    "authors": [
+        {
+            "name": "Developer",
+            "email": "dev@example.com"
+        }
+    ]
+}
