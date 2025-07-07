@@ -1,22 +1,55 @@
 import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { Calendar } from "../ui/calendar";
 
 interface AddCustomerModalProps {
-    onClose: () => void;
-    onSubmit: (customerData: any) => void;
+    onRequestClose: (opts: {
+        created?: boolean;
+        updated?: boolean;
+        customerData?: any;
+    }) => void;
+    customer?: any;
 }
 
-export function AddCustomerModal({ onClose, onSubmit }: AddCustomerModalProps) {
+export function AddCustomerModal({
+    onRequestClose,
+    customer,
+}: AddCustomerModalProps) {
+    const isEdit = !!customer;
     const [formData, setFormData] = useState({
-        name: "",
-        phone: "",
-        tags: "",
-        notes: "",
-        follow_up_date: "",
+        name: customer?.name || "",
+        phone: customer?.phone || "",
+        tags: customer?.tags || "",
+        notes: customer?.notes || "",
+        follow_up_date: customer?.follow_up_date || "",
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [closing, setClosing] = useState<
+        false | "closed" | "created" | "updated"
+    >(false);
+
+    React.useEffect(() => {
+        if (closing) {
+            const timeout = setTimeout(() => {
+                setClosing(false);
+                onRequestClose({
+                    created: closing === "created",
+                    updated: closing === "updated",
+                    customerData:
+                        closing === "created" || closing === "updated"
+                            ? formData
+                            : undefined,
+                });
+            }, 200);
+            return () => clearTimeout(timeout);
+        }
+    }, [closing, onRequestClose]);
+
+    const handleClose = () => {
+        setClosing("closed");
+    };
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
@@ -44,10 +77,15 @@ export function AddCustomerModal({ onClose, onSubmit }: AddCustomerModalProps) {
 
         setIsSubmitting(true);
         try {
-            await onSubmit(formData);
+            if (isEdit) {
+                // update
+                // You may want to call apiClient.updateCustomer here if needed
+                setClosing("updated");
+            } else {
+                setClosing("created");
+            }
         } catch (error) {
-            console.error("Error adding customer:", error);
-        } finally {
+            console.error("Error saving customer:", error);
             setIsSubmitting(false);
         }
     };
@@ -59,16 +97,38 @@ export function AddCustomerModal({ onClose, onSubmit }: AddCustomerModalProps) {
         }
     };
 
+    function parseLocalDate(dateString: string) {
+        const [year, month, day] = dateString.split("-").map(Number);
+        return new Date(year, month - 1, day);
+    }
+
+    function formatLocalDate(date: Date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div
+            className={`fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in-0 ${
+                closing ? "animate-out fade-out-0" : ""
+            }`}
+            style={{ animationDuration: "200ms" }}
+        >
+            <div
+                className={`bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 fade-in-0 ${
+                    closing ? "animate-out zoom-out-95 fade-out-0" : ""
+                }`}
+                style={{ animationDuration: "200ms" }}
+            >
                 <div className="p-6">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-xl font-semibold text-gray-900">
-                            Add New Customer
+                            {isEdit ? "Edit Customer" : "Add New Customer"}
                         </h2>
                         <button
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="text-gray-400 hover:text-gray-600"
                         >
                             <svg
@@ -164,15 +224,22 @@ export function AddCustomerModal({ onClose, onSubmit }: AddCustomerModalProps) {
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Follow-up Date
                             </label>
-                            <Input
-                                type="date"
-                                value={formData.follow_up_date}
-                                onChange={(e) =>
+                            <Calendar
+                                mode="single"
+                                selected={
+                                    formData.follow_up_date
+                                        ? parseLocalDate(
+                                              formData.follow_up_date
+                                          )
+                                        : undefined
+                                }
+                                onSelect={(date) =>
                                     handleChange(
                                         "follow_up_date",
-                                        e.target.value
+                                        date ? formatLocalDate(date) : ""
                                     )
                                 }
+                                className="rounded-md border"
                             />
                         </div>
 
@@ -180,7 +247,7 @@ export function AddCustomerModal({ onClose, onSubmit }: AddCustomerModalProps) {
                             <Button
                                 type="button"
                                 variant="outline"
-                                onClick={onClose}
+                                onClick={handleClose}
                                 className="flex-1"
                                 disabled={isSubmitting}
                             >
@@ -191,7 +258,13 @@ export function AddCustomerModal({ onClose, onSubmit }: AddCustomerModalProps) {
                                 className="flex-1"
                                 disabled={isSubmitting}
                             >
-                                {isSubmitting ? "Adding..." : "Add Customer"}
+                                {isSubmitting
+                                    ? isEdit
+                                        ? "Saving..."
+                                        : "Adding..."
+                                    : isEdit
+                                    ? "Save Changes"
+                                    : "Add Customer"}
                             </Button>
                         </div>
                     </form>

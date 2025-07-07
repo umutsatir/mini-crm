@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { apiClient } from "../../lib/api";
+import { Calendar } from "../ui/calendar";
 
 interface Customer {
     id: number;
@@ -16,14 +17,14 @@ interface Customer {
 
 interface EditCustomerModalProps {
     customer: Customer;
-    onClose: () => void;
-    onSubmit: () => void;
+    onRequestClose: (opts: { updated: boolean }) => void;
+    isClosing?: boolean;
 }
 
 export function EditCustomerModal({
     customer,
-    onClose,
-    onSubmit,
+    onRequestClose,
+    isClosing = false,
 }: EditCustomerModalProps) {
     const [formData, setFormData] = useState({
         name: "",
@@ -44,6 +45,10 @@ export function EditCustomerModal({
             follow_up_date: customer.follow_up_date,
         });
     }, [customer]);
+
+    const handleClose = () => {
+        onRequestClose({ updated: false });
+    };
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
@@ -71,17 +76,23 @@ export function EditCustomerModal({
 
         setIsSubmitting(true);
         try {
+            const submitData = {
+                ...formData,
+                follow_up_date:
+                    formData.follow_up_date === ""
+                        ? undefined
+                        : formData.follow_up_date,
+            };
             const response = await apiClient.updateCustomer(
                 customer.id,
-                formData
+                submitData
             );
 
             if (response.error) {
                 throw new Error(response.error);
             }
 
-            onSubmit();
-            onClose();
+            onRequestClose({ updated: true });
         } catch (error) {
             console.error("Error updating customer:", error);
             setErrors({
@@ -102,16 +113,38 @@ export function EditCustomerModal({
         }
     };
 
+    function parseLocalDate(dateString: string) {
+        const [year, month, day] = dateString.split("-").map(Number);
+        return new Date(year, month - 1, day);
+    }
+
+    function formatLocalDate(date: Date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div
+            className={`fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in-0 ${
+                isClosing ? "animate-out fade-out-0" : ""
+            }`}
+            style={{ animationDuration: "200ms" }}
+        >
+            <div
+                className={`bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 fade-in-0 ${
+                    isClosing ? "animate-out zoom-out-95 fade-out-0" : ""
+                }`}
+                style={{ animationDuration: "200ms" }}
+            >
                 <div className="p-6">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-xl font-semibold text-gray-900">
                             Edit Customer
                         </h2>
                         <button
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="text-gray-400 hover:text-gray-600"
                         >
                             <svg
@@ -207,15 +240,22 @@ export function EditCustomerModal({
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Follow-up Date
                             </label>
-                            <Input
-                                type="date"
-                                value={formData.follow_up_date}
-                                onChange={(e) =>
+                            <Calendar
+                                mode="single"
+                                selected={
+                                    formData.follow_up_date
+                                        ? parseLocalDate(
+                                              formData.follow_up_date
+                                          )
+                                        : undefined
+                                }
+                                onSelect={(date) =>
                                     handleChange(
                                         "follow_up_date",
-                                        e.target.value
+                                        date ? formatLocalDate(date) : ""
                                     )
                                 }
+                                className="rounded-md border"
                             />
                         </div>
 
@@ -229,7 +269,7 @@ export function EditCustomerModal({
                             <Button
                                 type="button"
                                 variant="outline"
-                                onClick={onClose}
+                                onClick={handleClose}
                                 className="flex-1"
                                 disabled={isSubmitting}
                             >

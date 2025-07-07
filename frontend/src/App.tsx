@@ -12,11 +12,14 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { AddCustomerModal } from "@/components/customers/AddCustomerModal";
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [showRegister, setShowRegister] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [reloadKey, setReloadKey] = useState(0);
 
     useEffect(() => {
         checkAuthStatus();
@@ -52,6 +55,20 @@ function App() {
         } finally {
             apiClient.clearToken();
             setIsAuthenticated(false);
+        }
+    };
+
+    const handleAddCustomer = async (customerData: any) => {
+        try {
+            const response = await apiClient.createCustomer(customerData);
+            if (response.error) throw new Error(response.error);
+            setShowAddModal(false);
+            setReloadKey((k) => k + 1);
+        } catch (err) {
+            // Optionally show error
+            alert(
+                err instanceof Error ? err.message : "Failed to add customer"
+            );
         }
     };
 
@@ -143,15 +160,47 @@ function App() {
 
                     {/* All Customers Section */}
                     <div>
-                        <div className="flex items-center space-x-2 mb-4">
-                            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                                <Calendar className="w-4 h-4 text-white" />
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center space-x-2">
+                                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                                    <Calendar className="w-4 h-4 text-white" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-900">
+                                    All Customers
+                                </h2>
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-900">
-                                All Customers
-                            </h2>
+                            <Button onClick={() => setShowAddModal(true)}>
+                                Add Customer
+                            </Button>
                         </div>
-                        <CustomerList />
+                        <CustomerList reloadKey={reloadKey} />
+                        {showAddModal && (
+                            <AddCustomerModal
+                                onRequestClose={async ({
+                                    created,
+                                    customerData,
+                                }) => {
+                                    if (created && customerData) {
+                                        try {
+                                            const response =
+                                                await apiClient.createCustomer(
+                                                    customerData
+                                                );
+                                            if (response.error)
+                                                throw new Error(response.error);
+                                            setReloadKey((k) => k + 1);
+                                        } catch (err) {
+                                            alert(
+                                                err instanceof Error
+                                                    ? err.message
+                                                    : "Failed to add customer"
+                                            );
+                                        }
+                                    }
+                                    setShowAddModal(false);
+                                }}
+                            />
+                        )}
                     </div>
                 </div>
             </div>

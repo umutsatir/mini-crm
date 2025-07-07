@@ -81,6 +81,9 @@
 
 ## 🚀 Extension Ideas (Post-MVP, not in initial scope)
 
+-   [ ] Responsive design
+-   [ ] Dark/light mode (user can select, hold the current mode)
+-   [ ] Phone number country code selection (automatically selected based on the location)
 -   [ ] Tag filtering (frontend & backend)
 -   [ ] Reminder email notifications
 -   [ ] CSV export of customers
