@@ -1,14 +1,50 @@
 import React, { useState } from "react";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
     Card,
     CardContent,
     CardDescription,
     CardHeader,
     CardTitle,
-} from "../ui/card";
-import { apiClient } from "../../lib/api";
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { apiClient } from "@/lib/api";
+import {
+    Loader2,
+    Mail,
+    Lock,
+    Users,
+    User,
+    ArrowRight,
+    CheckCircle,
+} from "lucide-react";
+
+const registerSchema = z
+    .object({
+        name: z.string().min(2, "Name must be at least 2 characters"),
+        email: z.string().email("Please enter a valid email address"),
+        password: z.string().min(6, "Password must be at least 6 characters"),
+        confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+        message: "Passwords don't match",
+        path: ["confirmPassword"],
+    });
+
+type RegisterFormData = z.infer<typeof registerSchema>;
 
 interface RegisterFormProps {
     onSuccess: (user: any, token: string) => void;
@@ -19,32 +55,29 @@ export function RegisterForm({
     onSuccess,
     onSwitchToLogin,
 }: RegisterFormProps) {
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const form = useForm<RegisterFormData>({
+        resolver: zodResolver(registerSchema),
+        defaultValues: {
+            name: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+        },
+    });
+
+    const onSubmit = async (data: RegisterFormData) => {
         setLoading(true);
         setError("");
 
-        if (password !== confirmPassword) {
-            setError("Passwords do not match");
-            setLoading(false);
-            return;
-        }
-
-        if (password.length < 6) {
-            setError("Password must be at least 6 characters");
-            setLoading(false);
-            return;
-        }
-
         try {
-            const response = await apiClient.register(name, email, password);
+            const response = await apiClient.register(
+                data.name,
+                data.email,
+                data.password
+            );
 
             if (response.error) {
                 setError(response.error);
@@ -53,113 +86,191 @@ export function RegisterForm({
 
             if (
                 response.data &&
+                typeof response.data === "object" &&
                 "token" in response.data &&
                 "user" in response.data
             ) {
-                apiClient.setToken(response.data.token);
-                onSuccess(response.data.user, response.data.token);
+                const responseData = response.data as {
+                    token: string;
+                    user: any;
+                };
+                apiClient.setToken(responseData.token);
+                onSuccess(responseData.user, responseData.token);
             }
         } catch (err) {
-            setError("An error occurred during registration");
+            setError(
+                "An error occurred during registration. Please try again."
+            );
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <Card className="w-full max-w-md mx-auto">
-            <CardHeader>
-                <CardTitle>Create Account</CardTitle>
-                <CardDescription>
-                    Sign up for your MiniCRM account
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {error && (
-                        <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-                            {error}
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4">
+            <Card className="w-full max-w-md shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+                <CardHeader className="space-y-1 pb-4">
+                    <div className="flex items-center justify-center mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <CheckCircle className="w-7 h-7 text-white" />
                         </div>
-                    )}
-
-                    <div className="space-y-2">
-                        <label htmlFor="name" className="text-sm font-medium">
-                            Full Name
-                        </label>
-                        <Input
-                            id="name"
-                            type="text"
-                            placeholder="Enter your full name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required
-                        />
                     </div>
-
-                    <div className="space-y-2">
-                        <label htmlFor="email" className="text-sm font-medium">
-                            Email
-                        </label>
-                        <Input
-                            id="email"
-                            type="email"
-                            placeholder="Enter your email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label
-                            htmlFor="password"
-                            className="text-sm font-medium"
+                    <CardTitle className="text-2xl font-bold text-center text-gray-900">
+                        Create account
+                    </CardTitle>
+                    <CardDescription className="text-center text-gray-600">
+                        Sign up for your MiniCRM account
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Form {...form}>
+                        <form
+                            onSubmit={form.handleSubmit(onSubmit)}
+                            className="space-y-4"
                         >
-                            Password
-                        </label>
-                        <Input
-                            id="password"
-                            type="password"
-                            placeholder="Enter your password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
+                            {error && (
+                                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+                                    <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center">
+                                        <span className="text-white text-xs">
+                                            !
+                                        </span>
+                                    </div>
+                                    <span>{error}</span>
+                                </div>
+                            )}
 
-                    <div className="space-y-2">
-                        <label
-                            htmlFor="confirmPassword"
-                            className="text-sm font-medium"
-                        >
-                            Confirm Password
-                        </label>
-                        <Input
-                            id="confirmPassword"
-                            type="password"
-                            placeholder="Confirm your password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            required
-                        />
-                    </div>
+                            <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-medium text-gray-700">
+                                            Full Name
+                                        </FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                                <Input
+                                                    {...field}
+                                                    type="text"
+                                                    placeholder="Enter your full name"
+                                                    className="pl-10 h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                    <Button type="submit" className="w-full" disabled={loading}>
-                        {loading ? "Creating account..." : "Create Account"}
-                    </Button>
+                            <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-medium text-gray-700">
+                                            Email Address
+                                        </FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                                <Input
+                                                    {...field}
+                                                    type="email"
+                                                    placeholder="Enter your email"
+                                                    className="pl-10 h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                    <div className="text-center text-sm">
-                        Already have an account?{" "}
-                        <button
-                            type="button"
-                            onClick={onSwitchToLogin}
-                            className="text-blue-600 hover:underline"
-                        >
-                            Sign in
-                        </button>
+                            <FormField
+                                control={form.control}
+                                name="password"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-medium text-gray-700">
+                                            Password
+                                        </FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                                <Input
+                                                    {...field}
+                                                    type="password"
+                                                    placeholder="Create a password"
+                                                    className="pl-10 h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="confirmPassword"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-medium text-gray-700">
+                                            Confirm Password
+                                        </FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                                <Input
+                                                    {...field}
+                                                    type="password"
+                                                    placeholder="Confirm your password"
+                                                    className="pl-10 h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <Button
+                                type="submit"
+                                className="w-full h-11 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <div className="flex items-center justify-center space-x-2">
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <span>Creating account...</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-center space-x-2">
+                                        <span>Create Account</span>
+                                        <ArrowRight className="w-4 h-4" />
+                                    </div>
+                                )}
+                            </Button>
+                        </form>
+                    </Form>
+
+                    <Separator className="my-6" />
+
+                    <div className="text-center">
+                        <p className="text-sm text-gray-600">
+                            Already have an account?{" "}
+                            <button
+                                type="button"
+                                onClick={onSwitchToLogin}
+                                className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200"
+                            >
+                                Sign in
+                            </button>
+                        </p>
                     </div>
-                </form>
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
+        </div>
     );
 }

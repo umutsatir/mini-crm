@@ -1,9 +1,18 @@
-const API_BASE_URL = "http://localhost:8000/backend";
+const API_BASE_URL = "http://localhost/mini-crm/backend";
 
 interface ApiResponse<T = any> {
     data?: T;
     error?: string;
     message?: string;
+}
+
+interface CustomersResponse {
+    customers: any[];
+}
+
+interface FollowUpsResponse {
+    followups: any[];
+    date: string;
 }
 
 class ApiClient {
@@ -99,16 +108,34 @@ class ApiClient {
 
     // Customer endpoints
     async getCustomers() {
-        return this.request("/api/customers");
+        const response = await this.request<CustomersResponse>(
+            "/api/customers"
+        );
+        if (response.data && response.data.customers) {
+            return { data: response.data.customers };
+        }
+        return response;
     }
 
     async getFollowUps(date?: string) {
         const params = date ? `?date=${date}` : "";
-        return this.request(`/api/customers/followups${params}`);
+        const response = await this.request<FollowUpsResponse>(
+            `/api/customers/followups${params}`
+        );
+        if (response.data && response.data.followups) {
+            return { data: response.data.followups };
+        }
+        return response;
     }
 
     async getTodaysFollowUps() {
-        return this.request("/api/customers/followups");
+        const response = await this.request<FollowUpsResponse>(
+            "/api/customers/followups"
+        );
+        if (response.data && response.data.followups) {
+            return { data: response.data.followups };
+        }
+        return response;
     }
 
     async createCustomer(customer: {

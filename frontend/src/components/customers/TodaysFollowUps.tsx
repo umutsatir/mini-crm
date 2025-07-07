@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { apiClient } from "../../lib/api";
-import { CustomerCard } from "./CustomerCard";
 
 interface Customer {
     id: number;

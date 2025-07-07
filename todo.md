@@ -62,12 +62,12 @@
 
 ## 4. Integration
 
--   [ ] Connect frontend to backend API (auth, customer CRUD)
--   [ ] Test end-to-end flows (register, login, add/edit/delete customer, follow-ups)
+-   [x] Connect frontend to backend API (auth, customer CRUD)
+-   [x] Test end-to-end flows (register, login, add/edit/delete customer, follow-ups)
 
 ## 5. Polish & QA
 
--   [ ] UI polish (shadcn/ui, Tailwind tweaks)
+-   [x] UI polish (shadcn/ui, Tailwind tweaks)
 -   [ ] Error handling and validation (frontend & backend)
 -   [ ] Security review (auth, SQL injection, XSS)
 -   [ ] Final bugfixes

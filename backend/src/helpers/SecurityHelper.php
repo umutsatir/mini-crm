@@ -8,6 +8,22 @@ class SecurityHelper
      */
     public static function setSecurityHeaders()
     {
+        // CORS headers for development
+        if (isset($_SERVER['HTTP_ORIGIN']) && preg_match('/^http:\/\/localhost(:\d+)?$/', $_SERVER['HTTP_ORIGIN'])) {
+            header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
+        } else {
+            header('Access-Control-Allow-Origin: http://localhost:5173'); // fallback for dev
+        }
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+        header('Access-Control-Allow-Credentials: true');
+
+        // Handle preflight requests
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit();
+        }
+
         header('X-Content-Type-Options: nosniff');
         header('X-Frame-Options: DENY');
         header('X-XSS-Protection: 1; mode=block');

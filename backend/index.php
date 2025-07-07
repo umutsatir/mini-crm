@@ -16,7 +16,7 @@ $request_uri = $_SERVER['REQUEST_URI'];
 $request_method = $_SERVER['REQUEST_METHOD'];
 
 // Remove base path if exists
-$base_path = '/backend';
+$base_path = '/mini-crm/backend';
 if (strpos($request_uri, $base_path) === 0) {
     $request_uri = substr($request_uri, strlen($base_path));
 }
