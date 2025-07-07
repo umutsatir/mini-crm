@@ -46,19 +46,19 @@
 
 ### 3.2. Auth UI
 
--   [ ] Build login/signup forms
--   [ ] Handle session state (login/logout)
+-   [x] Build login/signup forms
+-   [x] Handle session state (login/logout)
 
 ### 3.3. Customer Management UI
 
--   [ ] Customer list view (all customers)
--   [ ] "Today's Follow-Ups" section
--   [ ] Add/Edit customer modal or inline form
--   [ ] Delete customer action
--   [ ] WhatsApp quick message button (link)
--   [ ] Tag input (comma-separated or checkboxes)
--   [ ] Notes and follow-up date fields
--   [ ] Responsive layout (mobile-friendly)
+-   [x] Customer list view (all customers)
+-   [x] "Today's Follow-Ups" section
+-   [x] Add/Edit customer modal or inline form
+-   [x] Delete customer action
+-   [x] WhatsApp quick message button (link)
+-   [x] Tag input (comma-separated or checkboxes)
+-   [x] Notes and follow-up date fields
+-   [x] Responsive layout (mobile-friendly)
 
 ## 4. Integration
 

@@ -107,6 +107,10 @@ class ApiClient {
         return this.request(`/api/customers/followups${params}`);
     }
 
+    async getTodaysFollowUps() {
+        return this.request("/api/customers/followups");
+    }
+
     async createCustomer(customer: {
         name: string;
         phone: string;
