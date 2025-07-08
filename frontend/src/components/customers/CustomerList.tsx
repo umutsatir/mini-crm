@@ -5,6 +5,7 @@ import { Card, CardContent } from "../ui/card";
 import { apiClient } from "../../lib/api";
 import { CustomerCard } from "./CustomerCard";
 import { AddCustomerModal } from "./AddCustomerModal";
+import { TagFilter } from "./TagFilter";
 
 interface Customer {
     id: number;
@@ -33,22 +34,22 @@ function DeleteCustomerModal({
     if (!open && !isClosing) return null;
     return (
         <div
-            className={`fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in-0 ${
+            className={`fixed inset-0 bg-black/20 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in-0 ${
                 isClosing ? "animate-out fade-out-0" : ""
             }`}
             style={{ animationDuration: "200ms" }}
         >
             <div
-                className={`bg-white rounded-lg shadow-xl max-w-sm w-full animate-in zoom-in-95 fade-in-0 ${
+                className={`bg-white dark:bg-slate-900 dark:text-gray-100 rounded-lg shadow-xl max-w-sm w-full animate-in zoom-in-95 fade-in-0 border border-gray-200 dark:border-slate-700 ${
                     isClosing ? "animate-out zoom-out-95 fade-out-0" : ""
                 }`}
                 style={{ animationDuration: "200ms" }}
             >
                 <div className="p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                         Delete Customer
                     </h2>
-                    <p className="text-gray-700 mb-6">
+                    <p className="text-gray-700 dark:text-gray-200 mb-6">
                         Are you sure you want to delete{" "}
                         <span className="font-bold">{customerName}</span>? This
                         action cannot be undone.
@@ -57,14 +58,14 @@ function DeleteCustomerModal({
                         <Button
                             variant="outline"
                             onClick={onClose}
-                            className="flex-1"
+                            className="flex-1 dark:bg-slate-800 dark:text-gray-100 dark:border-slate-700"
                         >
                             Cancel
                         </Button>
                         <Button
                             variant="destructive"
                             onClick={onConfirm}
-                            className="flex-1"
+                            className="flex-1 dark:bg-red-800 dark:text-white dark:border-red-900"
                         >
                             Delete
                         </Button>
@@ -75,7 +76,13 @@ function DeleteCustomerModal({
     );
 }
 
-export function CustomerList({ reloadKey }: { reloadKey?: number }) {
+export function CustomerList({
+    reloadKey,
+    onDataChanged,
+}: {
+    reloadKey?: number;
+    onDataChanged?: () => void;
+}) {
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -91,6 +98,12 @@ export function CustomerList({ reloadKey }: { reloadKey?: number }) {
     const [isDeleteModalClosing, setIsDeleteModalClosing] = useState(false);
     const [deleteCustomer, setDeleteCustomer] = useState<Customer | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+    // Ensure selectedTags is always an array of strings
+    const safeSelectedTags = selectedTags.filter(
+        (tag) => tag != null && typeof tag === "string"
+    );
 
     useEffect(() => {
         loadCustomers();
@@ -116,32 +129,6 @@ export function CustomerList({ reloadKey }: { reloadKey?: number }) {
         }
     };
 
-    const handleAddCustomer = async (customerData: any) => {
-        try {
-            const response = await apiClient.createCustomer(customerData);
-
-            if (response.error) {
-                throw new Error(response.error);
-            }
-
-            if (
-                response.data &&
-                typeof response.data === "object" &&
-                "customer" in response.data
-            ) {
-                setCustomers((prev) => [
-                    (response.data as any).customer,
-                    ...prev,
-                ]);
-                setShowAddModal(false);
-            }
-        } catch (err) {
-            setError(
-                err instanceof Error ? err.message : "Failed to add customer"
-            );
-        }
-    };
-
     const handleDeleteCustomer = async (id: number) => {
         try {
             const response = await apiClient.deleteCustomer(id);
@@ -153,6 +140,7 @@ export function CustomerList({ reloadKey }: { reloadKey?: number }) {
             setCustomers((prev) =>
                 prev.filter((customer) => customer.id !== id)
             );
+            if (onDataChanged) onDataChanged();
         } catch (err) {
             setError(
                 err instanceof Error ? err.message : "Failed to delete customer"
@@ -203,25 +191,28 @@ export function CustomerList({ reloadKey }: { reloadKey?: number }) {
         return 0;
     });
 
-    const filteredCustomers = sortedCustomers.filter(
-        (customer) =>
+    const filteredCustomers = sortedCustomers.filter((customer) => {
+        // Text search filter
+        const matchesSearch =
             customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             customer.phone.includes(searchTerm) ||
-            customer.tags.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+            customer.tags.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Add modal open/close logic
-    const handleOpenAddModal = () => {
-        setShowAddModal(true);
-        setIsAddModalClosing(false);
-    };
-    const handleCloseAddModal = () => {
-        setIsAddModalClosing(true);
-        setTimeout(() => {
-            setShowAddModal(false);
-            setIsAddModalClosing(false);
-        }, 200);
-    };
+        // Tag filter
+        const matchesTags =
+            safeSelectedTags.length === 0 ||
+            safeSelectedTags.some((selectedTag) => {
+                const tagString = selectedTag.trim();
+                if (!tagString) return false;
+
+                return customer.tags
+                    .split(",")
+                    .map((tag) => tag.trim().toLowerCase())
+                    .includes(tagString.toLowerCase());
+            });
+
+        return matchesSearch && matchesTags;
+    });
 
     if (loading) {
         return (
@@ -236,88 +227,130 @@ export function CustomerList({ reloadKey }: { reloadKey?: number }) {
             {/* Add Customer button moved to parent */}
 
             {error && (
-                <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                <div className="p-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
                     {error}
                 </div>
             )}
 
             <div className="space-y-4">
-                <div className="relative flex items-center gap-2">
-                    <Input
-                        type="text"
-                        placeholder="Search customers by name, phone, or tags..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                    />
-                    <svg
-                        className="absolute left-3 top-3 h-4 w-4 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                {/* Search and Controls */}
+                <div className="space-y-3">
+                    {/* Search Bar */}
+                    <div className="relative">
+                        <Input
+                            type="text"
+                            placeholder="Search customers by name, phone, or tags..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10"
                         />
-                    </svg>
-                    {/* View toggle */}
-                    <div className="flex items-center gap-1 ml-2">
-                        <Button
-                            variant={
-                                viewType === "card" ? "default" : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setViewType("card")}
-                            className={
-                                viewType === "card"
-                                    ? "bg-blue-600 text-white"
-                                    : ""
-                            }
+                        <svg
+                            className="absolute left-3 top-3 h-4 w-4 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                         >
-                            🗂️
-                        </Button>
-                        <Button
-                            variant={
-                                viewType === "list" ? "default" : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setViewType("list")}
-                            className={
-                                viewType === "list"
-                                    ? "bg-blue-600 text-white"
-                                    : ""
-                            }
-                        >
-                            📋
-                        </Button>
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
+                        </svg>
                     </div>
-                    {/* Sort select */}
-                    <select
-                        className="ml-2 border rounded px-2 py-1 text-sm"
-                        value={sortType}
-                        onChange={(e) => setSortType(e.target.value as any)}
-                    >
-                        <option value="created-desc">
-                            Sort by creation date
-                        </option>
-                        <option value="date-desc">
-                            Sort by follow-up date: Newest → Oldest
-                        </option>
-                        <option value="date-asc">
-                            Sort by follow-up date: Oldest → Newest
-                        </option>
-                        <option value="name-asc">Sort by name: A → Z</option>
-                        <option value="name-desc">Sort by name: Z → A</option>
-                    </select>
+
+                    {/* Controls Row */}
+                    <div className="flex flex-col gap-3">
+                        {/* Tag Filter */}
+                        <TagFilter
+                            selectedTags={safeSelectedTags}
+                            onTagChange={(tags) => {
+                                // Convert all tags to strings and filter out empty ones
+                                const validTags = tags
+                                    .map((tag) => String(tag).trim())
+                                    .filter((tag) => tag.length > 0);
+                                setSelectedTags(validTags);
+                            }}
+                        />
+
+                        {/* View and Sort Controls */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                            {/* View toggle */}
+                            <div className="flex items-center gap-1">
+                                <span className="text-sm text-gray-600 mr-2">
+                                    View:
+                                </span>
+                                <Button
+                                    variant={
+                                        viewType === "card"
+                                            ? "default"
+                                            : "outline"
+                                    }
+                                    size="sm"
+                                    onClick={() => setViewType("card")}
+                                    className={
+                                        viewType === "card"
+                                            ? "bg-blue-600 text-white"
+                                            : ""
+                                    }
+                                >
+                                    🗂️
+                                </Button>
+                                <Button
+                                    variant={
+                                        viewType === "list"
+                                            ? "default"
+                                            : "outline"
+                                    }
+                                    size="sm"
+                                    onClick={() => setViewType("list")}
+                                    className={
+                                        viewType === "list"
+                                            ? "bg-blue-600 text-white"
+                                            : ""
+                                    }
+                                >
+                                    📋
+                                </Button>
+                            </div>
+
+                            {/* Sort select */}
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600">
+                                    Sort:
+                                </span>
+                                <select
+                                    className="border rounded px-2 py-1 text-sm bg-white dark:bg-slate-800 dark:text-gray-100 dark:border-slate-700"
+                                    value={sortType}
+                                    onChange={(e) =>
+                                        setSortType(e.target.value as any)
+                                    }
+                                >
+                                    <option value="created-desc">
+                                        Newest first
+                                    </option>
+                                    <option value="date-desc">
+                                        Follow-up: Newest → Oldest
+                                    </option>
+                                    <option value="date-asc">
+                                        Follow-up: Oldest → Newest
+                                    </option>
+                                    <option value="name-asc">
+                                        Name: A → Z
+                                    </option>
+                                    <option value="name-desc">
+                                        Name: Z → A
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {filteredCustomers.length === 0 ? (
                     <Card>
                         <CardContent className="p-8 text-center">
-                            <p className="text-gray-500">
+                            <p className="text-gray-500 dark:text-gray-400">
                                 {searchTerm
                                     ? "No customers found matching your search."
                                     : "No customers yet. Add your first customer!"}
@@ -327,78 +360,98 @@ export function CustomerList({ reloadKey }: { reloadKey?: number }) {
                 ) : viewType === "card" ? (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {filteredCustomers.map((customer) => (
-                            <CustomerCard
+                            <div
                                 key={customer.id}
-                                customer={customer}
-                                onDelete={handleDeleteCustomer}
-                                onUpdate={loadCustomers}
-                            />
+                                className="min-w-0 max-w-full break-words"
+                            >
+                                <CustomerCard
+                                    customer={customer}
+                                    onDelete={handleDeleteCustomer}
+                                    onUpdate={loadCustomers}
+                                />
+                            </div>
                         ))}
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full bg-white border rounded shadow text-sm">
+                        <table className="min-w-full bg-white dark:bg-slate-800 border rounded shadow text-sm">
                             <thead>
                                 <tr>
-                                    <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase text-xs">
+                                    <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs">
                                         Name
                                     </th>
-                                    <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase text-xs">
+                                    <th className="hidden sm:table-cell px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs">
                                         Phone
                                     </th>
-                                    <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase text-xs">
+                                    <th className="hidden lg:table-cell px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs">
                                         Tags
                                     </th>
-                                    <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase text-xs">
+                                    <th className="hidden xl:table-cell px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs">
                                         Notes
                                     </th>
-                                    <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase text-xs">
-                                        Follow-up Date
+                                    <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs">
+                                        Follow-up
                                     </th>
-                                    <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase text-xs">
+                                    <th className="px-2 sm:px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase text-xs">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredCustomers.map((customer) => (
-                                    <tr key={customer.id} className="border-t">
-                                        <td className="px-4 py-2 font-semibold">
-                                            {customer.name}
+                                    <tr
+                                        key={customer.id}
+                                        className="border-t hover:bg-gray-50 dark:hover:bg-slate-700"
+                                    >
+                                        <td className="px-2 sm:px-4 py-2 font-semibold text-sm">
+                                            <div>
+                                                <div className="font-semibold text-gray-900 dark:text-white">
+                                                    {customer.name}
+                                                </div>
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">
+                                                    {customer.phone}
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td className="px-4 py-2">
+                                        <td className="hidden sm:table-cell px-4 py-2 text-sm text-gray-900 dark:text-white">
                                             {customer.phone}
                                         </td>
-                                        <td className="px-4 py-2">
+                                        <td className="hidden lg:table-cell px-4 py-2 text-sm max-w-32 truncate text-gray-900 dark:text-white">
                                             {customer.tags}
                                         </td>
-                                        <td className="px-4 py-2">
+                                        <td className="hidden xl:table-cell px-4 py-2 text-sm max-w-48 truncate text-gray-900 dark:text-white">
                                             {customer.notes}
                                         </td>
-                                        <td className="px-4 py-2">
+                                        <td className="px-2 sm:px-4 py-2 text-sm text-gray-900 dark:text-white">
                                             {customer.follow_up_date || "-"}
                                         </td>
-                                        <td className="px-4 py-2 space-x-2">
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() =>
-                                                    setEditCustomer(customer)
-                                                }
-                                                className="text-blue-600"
-                                            >
-                                                Edit
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() =>
-                                                    handleDeleteClick(customer)
-                                                }
-                                                className="text-red-600"
-                                            >
-                                                Delete
-                                            </Button>
+                                        <td className="px-2 sm:px-4 py-2">
+                                            <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        setEditCustomer(
+                                                            customer
+                                                        )
+                                                    }
+                                                    className="text-blue-600 text-xs"
+                                                >
+                                                    Edit
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        handleDeleteClick(
+                                                            customer
+                                                        )
+                                                    }
+                                                    className="text-red-600 text-xs"
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -408,9 +461,6 @@ export function CustomerList({ reloadKey }: { reloadKey?: number }) {
                 )}
             </div>
 
-            {showAddModal || isAddModalClosing ? (
-                <AddCustomerModal onRequestClose={handleCloseAddModal} />
-            ) : null}
             {editCustomer && (
                 <AddCustomerModal
                     onRequestClose={() => setEditCustomer(null)}

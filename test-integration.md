@@ -12,7 +12,7 @@ This guide helps you test that the frontend and backend are properly integrated.
     cp env.example .env
     # Edit .env with your database credentials
     # Make sure your web server (Apache/Nginx) is configured to serve from ~/Sites/mini-crm
-    # Access via: http://localhost/minicrm/backend
+    # Access via: http://localhost/mini-crm/backend
     ```
 
 2. **Frontend Setup**:
@@ -140,7 +140,7 @@ This guide helps you test that the frontend and backend are properly integrated.
     tail -f /var/log/apache2/error.log  # or your PHP error log
 
              # Test API directly
-    curl -X POST http://localhost/minicrm/backend/api/auth/login \
+    curl -X POST http://localhost/mini-crm/backend/api/auth/login \
      -H "Content-Type: application/json" \
      -d '{"email":"john@example.com","password":"password123"}'
     ```

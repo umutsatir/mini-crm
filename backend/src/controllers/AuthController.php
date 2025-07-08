@@ -104,25 +104,33 @@ class AuthController
 
     public function refresh()
     {
-        $token = JWTHelper::getTokenFromHeader();
+        $input = $this->getJsonInput();
+        $refreshToken = $input['refresh_token'] ?? '';
 
-        if (!$token) {
-            $this->jsonResponse(['error' => 'Token required'], 401);
+        if (!$refreshToken) {
+            $this->jsonResponse(['error' => 'Refresh token required'], 400);
             return;
         }
 
-        try {
-            $new_token = JWTHelper::refreshToken($token);
-            $user = JWTHelper::getUserFromToken($new_token);
+        require_once __DIR__ . '/../helpers/RefreshTokenHelper.php';
+        require_once __DIR__ . '/../helpers/JWTHelper.php';
+        require_once __DIR__ . '/../models/User.php';
 
-            $this->jsonResponse([
-                'message' => 'Token refreshed successfully',
-                'user' => $user->toArray(),
-                'token' => $new_token
-            ]);
-        } catch (Exception $e) {
-            $this->jsonResponse(['error' => $e->getMessage()], 401);
+        $userId = RefreshTokenHelper::validate($refreshToken);
+        if (!$userId) {
+            $this->jsonResponse(['error' => 'Invalid or expired refresh token'], 401);
+            return;
         }
+
+        $user = User::findById($userId);
+        if (!$user) {
+            $this->jsonResponse(['error' => 'User not found'], 404);
+            return;
+        }
+
+        $newAccessToken = JWTHelper::generateToken($user);
+
+        $this->jsonResponse(['token' => $newAccessToken]);
     }
 
     private function getJsonInput()

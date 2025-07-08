@@ -3,6 +3,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { apiClient } from "../../lib/api";
 import { Calendar } from "../ui/calendar";
+import { PhoneInput } from "../ui/phone-input";
 
 interface Customer {
     id: number;
@@ -125,22 +126,23 @@ export function EditCustomerModal({
         return `${year}-${month}-${day}`;
     }
 
+    if (!open && !isClosing) return null;
     return (
         <div
-            className={`fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in-0 ${
+            className={`fixed inset-0 bg-black/20 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in-0 ${
                 isClosing ? "animate-out fade-out-0" : ""
             }`}
             style={{ animationDuration: "200ms" }}
         >
             <div
-                className={`bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-in zoom-in-95 fade-in-0 ${
+                className={`bg-white dark:bg-slate-900 dark:text-gray-100 rounded-lg shadow-xl max-w-lg w-full border border-gray-200 dark:border-slate-700 animate-in zoom-in-95 fade-in-0 ${
                     isClosing ? "animate-out zoom-out-95 fade-out-0" : ""
                 }`}
                 style={{ animationDuration: "200ms" }}
             >
                 <div className="p-6">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-semibold text-gray-900">
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                             Edit Customer
                         </h2>
                         <button
@@ -165,7 +167,7 @@ export function EditCustomerModal({
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 Name *
                             </label>
                             <Input
@@ -185,16 +187,15 @@ export function EditCustomerModal({
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 Phone Number *
                             </label>
-                            <Input
-                                type="tel"
+                            <PhoneInput
                                 value={formData.phone}
-                                onChange={(e) =>
-                                    handleChange("phone", e.target.value)
+                                onChange={(value) =>
+                                    handleChange("phone", value)
                                 }
-                                placeholder="+1 (555) 123-4567"
+                                placeholder="Enter phone number"
                                 className={errors.phone ? "border-red-500" : ""}
                             />
                             {errors.phone && (
@@ -205,7 +206,7 @@ export function EditCustomerModal({
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 Tags
                             </label>
                             <Input
@@ -222,7 +223,7 @@ export function EditCustomerModal({
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 Notes
                             </label>
                             <textarea
@@ -237,7 +238,7 @@ export function EditCustomerModal({
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 Follow-up Date
                             </label>
                             <Calendar

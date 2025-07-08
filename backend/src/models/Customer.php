@@ -67,6 +67,52 @@ class Customer
         }, $customers_data);
     }
 
+    public static function getUniqueTagsByUser($user_id)
+    {
+        $sql = "SELECT DISTINCT tags FROM customers WHERE user_id = ? AND deleted_at IS NULL AND tags IS NOT NULL AND tags != ''";
+        $tags_data = Database::fetchAll($sql, [$user_id]);
+
+        $all_tags = [];
+        foreach ($tags_data as $row) {
+            if (!empty($row['tags'])) {
+                $tags = array_map('trim', explode(',', $row['tags']));
+                $all_tags = array_merge($all_tags, $tags);
+            }
+        }
+
+        // Remove duplicates and empty values
+        $unique_tags = array_filter(array_unique($all_tags));
+        sort($unique_tags);
+
+        return array_values($unique_tags);
+    }
+
+    public static function getPopularTagsByUser($user_id, $limit = 10)
+    {
+        $sql = "SELECT tags FROM customers WHERE user_id = ? AND deleted_at IS NULL AND tags IS NOT NULL AND tags != ''";
+        $tags_data = Database::fetchAll($sql, [$user_id]);
+
+        $tag_counts = [];
+        foreach ($tags_data as $row) {
+            if (!empty($row['tags'])) {
+                $tags = array_map('trim', explode(',', $row['tags']));
+                foreach ($tags as $tag) {
+                    if (!empty($tag)) {
+                        $tag_counts[$tag] = ($tag_counts[$tag] ?? 0) + 1;
+                    }
+                }
+            }
+        }
+
+        // Sort by count (descending) and then alphabetically
+        arsort($tag_counts);
+
+        // Get top tags
+        $popular_tags = array_slice(array_keys($tag_counts), 0, $limit);
+
+        return $popular_tags;
+    }
+
     public static function create($user_id, $name, $phone, $tags = '', $notes = '', $follow_up_date = null)
     {
         $sql = "INSERT INTO customers (user_id, name, phone, tags, notes, follow_up_date) VALUES (?, ?, ?, ?, ?, ?)";
@@ -134,9 +180,15 @@ class Customer
         // Remove any non-numeric characters from phone
         $phone = preg_replace('/[^0-9]/', '', $this->phone);
 
-        // If phone doesn't start with country code, assume it's Turkish (+90)
-        if (!preg_match('/^90/', $phone)) {
-            $phone = '90' . $phone;
+        // If phone doesn't start with country code, try to detect it
+        if (!preg_match('/^[1-9]/', $phone)) {
+            // If it starts with 0, remove it and add 90 (Turkey)
+            if (preg_match('/^0/', $phone)) {
+                $phone = '90' . substr($phone, 1);
+            } else {
+                // Default to Turkey (+90) if no country code detected
+                $phone = '90' . $phone;
+            }
         }
 
         return "https://wa.me/{$phone}";

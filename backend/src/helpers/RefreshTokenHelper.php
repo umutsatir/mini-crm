@@ -1,7 +1,35 @@
 <?php
+require_once __DIR__ . '/Database.php';
 
 class RefreshTokenHelper
 {
+    public static function generate($userId)
+    {
+        $token = bin2hex(random_bytes(32));
+        // expiresAt is already in UTC because default timezone is set in index.php
+        $expiresAt = date('Y-m-d H:i:s', strtotime('+30 days'));
+
+        $sql = "INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?, ?, ?)";
+        Database::query($sql, [$userId, $token, $expiresAt]);
+
+        return $token;
+    }
+
+    public static function validate($token)
+    {
+        $sql = "SELECT user_id, expires_at FROM refresh_tokens WHERE token = ? LIMIT 1";
+        $row = Database::fetchOne($sql, [$token]);
+        if ($row && strtotime($row['expires_at']) > time()) {
+            return $row['user_id'];
+        }
+        return false;
+    }
+
+    public static function delete($token)
+    {
+        $sql = "DELETE FROM refresh_tokens WHERE token = ?";
+        Database::query($sql, [$token]);
+    }
 
     /**
      * Generate a refresh token

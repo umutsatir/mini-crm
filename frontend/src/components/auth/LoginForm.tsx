@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
     Card,
     CardContent,
@@ -81,15 +80,15 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4">
-            <Card className="w-full max-w-md shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-4">
+            <Card className="w-full max-w-md shadow-xl border-0 bg-white/80 backdrop-blur-sm dark:bg-slate-900 dark:text-gray-100">
                 <CardHeader className="space-y-1 pb-4">
                     <div className="flex items-center justify-center mb-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
                             <Users className="w-7 h-7 text-white" />
                         </div>
                     </div>
-                    <CardTitle className="text-2xl font-bold text-center text-gray-900">
+                    <CardTitle className="text-2xl font-bold text-center text-gray-900 dark:text-white">
                         Welcome back
                     </CardTitle>
                     <CardDescription className="text-center text-gray-600">
@@ -118,7 +117,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
                                 name="email"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-sm font-medium text-gray-700">
+                                        <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-200">
                                             Email Address
                                         </FormLabel>
                                         <FormControl>
@@ -128,7 +127,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
                                                     {...field}
                                                     type="email"
                                                     placeholder="Enter your email"
-                                                    className="pl-10 h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                    className="pl-10 h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:bg-slate-800 dark:text-gray-100"
                                                 />
                                             </div>
                                         </FormControl>
@@ -142,7 +141,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
                                 name="password"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-sm font-medium text-gray-700">
+                                        <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-200">
                                             Password
                                         </FormLabel>
                                         <FormControl>
@@ -152,7 +151,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
                                                     {...field}
                                                     type="password"
                                                     placeholder="Enter your password"
-                                                    className="pl-10 h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                    className="pl-10 h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500 dark:bg-slate-800 dark:text-gray-100"
                                                 />
                                             </div>
                                         </FormControl>
@@ -163,7 +162,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
 
                             <Button
                                 type="submit"
-                                className="w-full h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                                className="w-full h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 dark:bg-blue-700 dark:hover:bg-blue-800"
                                 disabled={loading}
                             >
                                 {loading ? (
@@ -184,12 +183,12 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
                     <Separator className="my-6" />
 
                     <div className="text-center">
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
                             Don't have an account?{" "}
                             <button
                                 type="button"
                                 onClick={onSwitchToRegister}
-                                className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200"
+                                className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200 dark:text-blue-400 dark:hover:text-blue-500"
                             >
                                 Create one now
                             </button>

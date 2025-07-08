@@ -1,9 +1,10 @@
 {
-    "name": "minicrm/backend",
+    "name": "mini-crm/backend",
     "description": "MiniCRM Backend API",
     "type": "project",
     "require": {
-        "firebase/php-jwt": "^6.0"
+        "firebase/php-jwt": "^6.0",
+        "pragmarx/countries": "^0.8.3"
     },
     "authors": [
         {

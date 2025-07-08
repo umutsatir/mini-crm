@@ -16,6 +16,7 @@ interface FollowUpsResponse {
 }
 
 class ApiClient {
+    static onTokenExpired: (() => void) | null = null;
     private token: string | null = null;
 
     setToken(token: string) {
@@ -66,6 +67,13 @@ class ApiClient {
             }
 
             if (!response.ok) {
+                if (
+                    typeof data.error === "string" &&
+                    data.error.toLowerCase().includes("token expired")
+                ) {
+                    this.clearToken();
+                    if (ApiClient.onTokenExpired) ApiClient.onTokenExpired();
+                }
                 return { error: data.error || "Request failed" };
             }
 
@@ -138,6 +146,37 @@ class ApiClient {
         return response;
     }
 
+    async getTags() {
+        const response = await this.request<{ tags: string[] }>(
+            "/api/customers/tags"
+        );
+        if (response.data && response.data.tags) {
+            return { data: response.data.tags };
+        }
+        return response;
+    }
+
+    async getPopularTags(limit: number = 10) {
+        const response = await this.request<{ tags: string[] }>(
+            `/api/customers/popular-tags?limit=${limit}`
+        );
+        if (response.data && response.data.tags) {
+            return { data: response.data.tags };
+        }
+        return response;
+    }
+
+    async getCountries(all: boolean = false) {
+        const params = all ? "?all=true" : "";
+        const response = await this.request<{ countries: any[] }>(
+            `/api/customers/countries${params}`
+        );
+        if (response.data && response.data.countries) {
+            return { data: response.data.countries };
+        }
+        return response;
+    }
+
     async createCustomer(customer: {
         name: string;
         phone: string;
@@ -175,3 +214,6 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient();
+export function setOnTokenExpired(cb: () => void) {
+    ApiClient.onTokenExpired = cb;
+}

@@ -68,23 +68,23 @@
 ## 5. Polish & QA
 
 -   [x] UI polish (shadcn/ui, Tailwind tweaks)
--   [ ] Error handling and validation (frontend & backend)
--   [ ] Security review (auth, SQL injection, XSS)
--   [ ] Final bugfixes
+-   [x] Error handling and validation (frontend & backend)
+-   [x] Security review (auth, SQL injection, XSS)
+-   [x] Final bugfixes
 
 ## 6. Deployment (Local MVP)
 
--   [ ] Prepare for local deployment (README, .env.example)
--   [ ] Test on local environment
+-   [x] Prepare for local deployment (README, .env.example)
+-   [x] Test on local environment
 
 ---
 
 ## 🚀 Extension Ideas (Post-MVP, not in initial scope)
 
--   [ ] Responsive design
--   [ ] Dark/light mode (user can select, hold the current mode)
--   [ ] Phone number country code selection (automatically selected based on the location)
--   [ ] Tag filtering (frontend & backend)
--   [ ] Reminder email notifications
+-   [x] Responsive design
+-   [x] Dark/light mode (user can select, hold the current mode)
+-   [x] Phone number country code selection (automatically selected based on the location)
+-   [x] Tag filtering (frontend & backend)
 -   [ ] CSV export of customers
 -   [ ] WhatsApp message templates
+-   [ ] Reminder email notifications

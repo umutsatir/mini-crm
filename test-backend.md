@@ -8,7 +8,7 @@ This guide helps you test the MiniCRM backend API endpoints.
 
 ```bash
 # Test if backend responds
-curl http://localhost/minicrm/backend/
+curl http://localhost/mini-crm/backend/
 
 # Expected response: {"authenticated":false} (if not logged in)
 ```
@@ -16,7 +16,7 @@ curl http://localhost/minicrm/backend/
 ### 2. Test User Registration
 
 ```bash
-curl -X POST http://localhost/minicrm/backend/api/auth/register \
+curl -X POST http://localhost/mini-crm/backend/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Test User",
@@ -30,7 +30,7 @@ curl -X POST http://localhost/minicrm/backend/api/auth/register \
 ### 3. Test User Login
 
 ```bash
-curl -X POST http://localhost/minicrm/backend/api/auth/login \
+curl -X POST http://localhost/mini-crm/backend/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john@example.com",
@@ -44,7 +44,7 @@ curl -X POST http://localhost/minicrm/backend/api/auth/login \
 
 ```bash
 # First get a token from login, then use it:
-curl http://localhost/minicrm/backend/ \
+curl http://localhost/mini-crm/backend/ \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 
 # Expected response: {"authenticated":true,"user":{...},"token":"..."}
@@ -53,7 +53,7 @@ curl http://localhost/minicrm/backend/ \
 ### 5. Test Get Customers (with token)
 
 ```bash
-curl http://localhost:8000/minicrm/backend/api/customers \
+curl http://localhost:8000/mini-crm/backend/api/customers \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 
 # Expected response: {"customers":[...]}
@@ -62,7 +62,7 @@ curl http://localhost:8000/minicrm/backend/api/customers \
 ### 6. Test Create Customer (with token)
 
 ```bash
-curl -X POST http://localhost:8000/minicrm/backend/api/customers \
+curl -X POST http://localhost:8000/mini-crm/backend/api/customers \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -d '{
@@ -79,7 +79,7 @@ curl -X POST http://localhost:8000/minicrm/backend/api/customers \
 ### 7. Test Get Today's Follow-ups (with token)
 
 ```bash
-curl http://localhost:8000/minicrm/backend/api/customers/followups \
+curl http://localhost:8000/mini-crm/backend/api/customers/followups \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 
 # Expected response: {"followups":[...],"date":"2024-01-XX"}
@@ -92,7 +92,7 @@ Here's a complete test script you can run:
 ```bash
 #!/bin/bash
 
-BASE_URL="http://localhost:8000/minicrm/backend"
+BASE_URL="http://localhost:8000/mini-crm/backend"
 EMAIL="test@example.com"
 PASSWORD="password123"
 
@@ -173,7 +173,7 @@ echo "✅ Backend testing completed!"
 
     ```bash
     # Check if backend is running
-    curl http://localhost:8000/minicrm/backend/
+    curl http://localhost:8000/mini-crm/backend/
     ```
 
 2. **CORS errors**:
@@ -261,7 +261,7 @@ mysql -u your_username -p -e "USE minicrm; SELECT * FROM users;"
 Run this single command to test if your backend is working:
 
 ```bash
-curl -X POST http://localhost:8000/minicrm/backend/api/auth/login \
+curl -X POST http://localhost:8000/mini-crm/backend/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"john@example.com","password":"password123"}'
 ```

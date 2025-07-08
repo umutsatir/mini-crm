@@ -163,6 +163,49 @@ class CustomerController
         ]);
     }
 
+    public function tags()
+    {
+        // Require authentication
+        $user = AuthMiddleware::requireAuth();
+
+        $tags = Customer::getUniqueTagsByUser($user->getId());
+
+        $this->jsonResponse(['tags' => $tags]);
+    }
+
+    public function popularTags()
+    {
+        // Require authentication
+        $user = AuthMiddleware::requireAuth();
+
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+        $tags = Customer::getPopularTagsByUser($user->getId(), $limit);
+
+        $this->jsonResponse(['tags' => $tags]);
+    }
+
+    public function countries()
+    {
+        // Countries endpoint is public - no authentication required
+        require_once __DIR__ . '/../helpers/CountryCodeHelper.php';
+
+        // Check if user wants all countries or just popular ones
+        $all = isset($_GET['all']) && $_GET['all'] === 'true';
+
+        if ($all) {
+            $countries = CountryCodeHelper::getAllCountries();
+        } else {
+            $countries = CountryCodeHelper::getPopularCountries();
+        }
+
+        // Add flag emojis to each country
+        foreach ($countries as &$country) {
+            $country['flag'] = CountryCodeHelper::getFlagEmoji($country['code']);
+        }
+
+        $this->jsonResponse(['countries' => $countries]);
+    }
+
     private function getJsonInput()
     {
         $input = file_get_contents('php://input');

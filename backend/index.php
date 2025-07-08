@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('UTC');
 session_start();
 
 // Load environment variables and helpers
@@ -71,6 +72,24 @@ switch ($request_uri) {
         require_once __DIR__ . '/src/controllers/CustomerController.php';
         $controller = new CustomerController();
         $controller->followups();
+        break;
+
+    case '/api/customers/tags':
+        require_once __DIR__ . '/src/controllers/CustomerController.php';
+        $controller = new CustomerController();
+        $controller->tags();
+        break;
+
+    case '/api/customers/popular-tags':
+        require_once __DIR__ . '/src/controllers/CustomerController.php';
+        $controller = new CustomerController();
+        $controller->popularTags();
+        break;
+
+    case '/api/customers/countries':
+        require_once __DIR__ . '/src/controllers/CustomerController.php';
+        $controller = new CustomerController();
+        $controller->countries();
         break;
 
     default:
